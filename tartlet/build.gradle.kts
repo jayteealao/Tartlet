@@ -4,11 +4,13 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
+    alias(libs.plugins.composeMultiplatform)
+    alias(libs.plugins.compose.compiler)
     alias(libs.plugins.vanniktech.mavenPublish)
 }
 
-group = "io.yumemi.something"
-version = "0.0.1"
+group = "io.yumemi"
+version = libs.versions.tartlet
 
 kotlin {
     androidTarget {
@@ -24,7 +26,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                // put your multiplatform dependencies here
+                implementation(compose.runtime)
             }
         }
         val commonTest by getting {
@@ -36,7 +38,7 @@ kotlin {
 }
 
 android {
-    namespace = "io.yumemi.something.library"
+    namespace = "io.yumemi.tartlet"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
@@ -54,13 +56,13 @@ mavenPublishing {
         signAllPublications()
     }
 
-    coordinates(group.toString(), "library", version.toString())
+    coordinates(group.toString(), "tartlet", version.toString())
 
     pom {
-        name = "My library"
-        description = "A library."
-        inceptionYear = "2024"
-        url = "https://github.com/yumemi-inc/something/"
+        name = "Tartlet"
+        description = "A Kotlin Multiplatform library."
+        inceptionYear = "2025"
+        url = "https://github.com/yumemi-inc/Tartlet/"
         licenses {
             license {
                 name = "MIT"
@@ -76,9 +78,9 @@ mavenPublishing {
             }
         }
         scm {
-            url = "https://github.com/yumemi-inc/something/"
-            connection = "scm:git:git://github.com/yumemi-inc/something.git"
-            developerConnection = "scm:git:git://github.com/yumemi-inc/something.git"
+            url = "https://github.com/yumemi-inc/Tartlet/"
+            connection = "scm:git:git://github.com/yumemi-inc/Tartlet.git"
+            developerConnection = "scm:git:git://github.com/yumemi-inc/Tartlet.git"
         }
     }
 }

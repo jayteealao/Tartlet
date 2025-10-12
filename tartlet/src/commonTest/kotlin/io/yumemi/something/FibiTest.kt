@@ -3,10 +3,10 @@ package io.yumemi.something
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class IosFibiTest {
+class FibiTest {
 
     @Test
     fun `test 3rd element`() {
-        assertEquals(7, generateFibi().take(3).last())
+        assertEquals(1 + 2, generateFibi().take(3).last())
     }
 }
