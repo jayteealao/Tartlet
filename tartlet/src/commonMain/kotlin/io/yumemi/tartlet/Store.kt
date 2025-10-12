@@ -18,13 +18,13 @@ import kotlinx.coroutines.flow.filter
  * @param SC The type of store contract, which must implement [StoreContract]
  * @param S The type of UI state, which must implement [UiState]
  * @param E The type of UI event, which must implement [UiEvent]
- * @property state The current UI state
+ * @property uiState The current UI state
  * @property storeContract The store contract instance, nullable to support state-only stores
  */
 @Suppress("unused")
 @Stable
 class Store<SC : StoreContract<S, E>, S : UiState, E : UiEvent>(
-    val state: S,
+    val uiState: S,
     @PublishedApi internal val storeContract: SC? = null,
 ) {
     /**
@@ -38,7 +38,7 @@ class Store<SC : StoreContract<S, E>, S : UiState, E : UiEvent>(
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is Store<*, *, *>) return false
-        return this.state == other.state
+        return this.uiState == other.uiState
     }
 
     /**
@@ -47,7 +47,7 @@ class Store<SC : StoreContract<S, E>, S : UiState, E : UiEvent>(
      * @return The hash code of the state
      */
     override fun hashCode(): Int {
-        return state.hashCode()
+        return uiState.hashCode()
     }
 
     /**
@@ -74,7 +74,7 @@ class Store<SC : StoreContract<S, E>, S : UiState, E : UiEvent>(
      * @param block The render block to execute if the state matches the type
      */
     inline fun <reified S2 : S> render(block: Store<*, S2, E>.() -> Unit) {
-        if (state is S2) {
+        if (uiState is S2) {
             @Suppress("UNCHECKED_CAST")
             block(this as Store<*, S2, E>)
         }
@@ -117,11 +117,12 @@ class Store<SC : StoreContract<S, E>, S : UiState, E : UiEvent>(
 @Suppress("unused")
 @Composable
 fun <SC : StoreContract<S, E>, S : UiState, E : UiEvent> rememberStore(storeContract: SC): Store<SC, S, E> {
-    val rememberStoreContract = remember { storeContract } // allow different Store Contract instances to be passed
+    val rememberStoreContract =
+        remember { storeContract } // allow different Store Contract instances to be passed
     val state by rememberStoreContract.uiState.collectAsState()
     return remember(state) {
         Store(
-            state = state,
+            uiState = state,
             storeContract = storeContract,
         )
     }
