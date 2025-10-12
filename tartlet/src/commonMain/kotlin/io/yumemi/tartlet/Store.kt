@@ -37,7 +37,7 @@ class Store<SC : StoreContract<S, E>, S : UiState, E : UiEvent>(
 
     @Composable
     inline fun <reified E2 : E> handle(crossinline block: Store<SC, S, E>.(E2) -> Unit) {
-        LaunchedEffect(Unit) {
+        LaunchedEffect(storeContract) {
             storeContract?.uiEvent?.filter { it is E2 }?.collect {
                 block(this@Store, it as E2)
             }
@@ -48,7 +48,8 @@ class Store<SC : StoreContract<S, E>, S : UiState, E : UiEvent>(
 @Suppress("unused")
 @Composable
 fun <SC : StoreContract<S, E>, S : UiState, E : UiEvent> rememberStore(storeContract: SC): Store<SC, S, E> {
-    val state by storeContract.uiState.collectAsState()
+    val rememberStoreContract = remember { storeContract } // allow different Store Contract instances to be passed
+    val state by rememberStoreContract.uiState.collectAsState()
     return remember(state) {
         Store(
             state = state,
