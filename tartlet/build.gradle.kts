@@ -10,7 +10,7 @@ plugins {
 }
 
 group = "io.yumemi"
-version = libs.versions.tartlet
+version = libs.versions.tartlet.get()
 
 kotlin {
     androidTarget {
@@ -26,6 +26,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
+                implementation(libs.coroutines.core)
                 implementation(compose.runtime)
             }
         }
