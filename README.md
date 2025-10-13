@@ -19,7 +19,15 @@ implementation("io.yumemi:tartlet:<latest-release>")
 Marker interface for UI state representations. Implement this interface for your state objects:
 
 ```kotlin
-data class CounterState(val count: Int = 0) : UiState
+data class CounterState(val count: Int) : UiState
+
+// If there are multiple States:
+//
+// sealed interface CounterState : UiState {
+//     data object Loading : CounterState
+//     data class Stable(val count: Int) : CounterState
+//     data class Error(val message: String) : CounterState
+// }
 ```
 
 ### UiEvent
@@ -28,7 +36,7 @@ Marker interface for one-time UI events. Implement this interface for events tha
 
 ```kotlin
 sealed interface CounterEvent : UiEvent {
-    data object ShowToast : CounterEvent
+    data class ShowToast(val message: String) : CounterEvent
 }
 ```
 
@@ -37,23 +45,31 @@ sealed interface CounterEvent : UiEvent {
 Typically implemented by a ViewModel:
 
 ```kotlin
-class CounterViewModel : ViewModel(), toreContract<CounterState, CounterEvent> {
-    private val _uiState: MutableStateFlow<CounterState> = MutableStateFlow(CounterState())
-    override val uiState: StateFlow<CounterState> = _uiState.asStateFlow()
+class CounterViewModel : ViewModel(), StoreContract<CounterState, CounterEvent> {
+    private val _uiState = MutableStateFlow<CounterState>(CounterState(count = 0))
+    override val uiState = _uiState.asStateFlow()
+
+    // Events are optional and do not need to be defined if not needed
+    private val _uiEvent = MutableSharedFlow<CounterEvent>()
+    override val uiEvent = _uiEvent.asSharedFlow()
 
     fun increment() {
         _uiState.update { it.copy(count = it.count + 1) }
     }
 
     fun decrement() {
-        _uiState.update { it.copy(count = it.count - 1) }
+        if (0 <= _uiState.value.count) {
+            _uiState.update { it.copy(count = it.count - 1) }
+        } esle {
+            viewModelScope.launch { _uiEvent.emit(CounterEvent.ShowToast("Can not Decrement.")) }            
+        }
     }
 }
 ```
 
 ### Store
 
-A container for UI state that provides methods to execute actions, render specific states, and handle events:
+A container for UI state that provides methods to render state values, execute actions, and handle events:
 
 ```kotlin
 @Composable
@@ -74,7 +90,7 @@ fun CounterScreen(viewModel: CounterViewModel = viewModel()) {
 }
 ```
 
-## Mock for preview on Android Studio
+## Mock for previewing in Android Studio
 
 Create an instance of `Store` directly with the target *UiState*.
 
@@ -93,3 +109,31 @@ fun LoadingPreview() {
 ```
 
 Therefore, if you prepare only the *UiState*, it is possible to develop the UI.
+
+## Mock a ViewModel for testing
+
+Wrap the ViewModel methods in an interface.
+
+```kt
+interface CounterStoreContract : StoreContract<CounterState, Nothing> {
+    fun increment()
+    fun decrement()
+}
+
+class MainViewModel : ViewModel(), CounterStoreContract {
+    private val _uiState = MutableStateFlow<CounterState>(CounterState(count = 0))
+    override val uiState = _uiState.asStateFlow()
+
+    override fun increment() {
+        // ...
+    }
+
+    override fun decrement() {
+        // ...
+    }
+}
+
+// in Compose
+val viewModel: CounterViewModel = viewModel()
+val store = rememberStore<CounterStoreContract, CounterState, Nothing>(viewModel)
+```
