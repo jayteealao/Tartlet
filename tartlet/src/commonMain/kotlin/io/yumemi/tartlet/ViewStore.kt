@@ -28,6 +28,7 @@ class ViewStore<ST : Store<S, E>, S : Any, E : Any>(
     state: () -> S,
 ) {
     val state: S = state()
+
     /**
      * Checks equality based on the current state.
      *
@@ -117,8 +118,9 @@ class ViewStore<ST : Store<S, E>, S : Any, E : Any>(
  */
 @Suppress("unused")
 @Composable
-fun <ST : Store<S, E>, S : Any, E : Any> rememberViewStore(store: () -> ST): ViewStore<ST, S, E> {
-    val rememberStore = remember { store() } // allow different Store instances to be passed
+fun <ST : Store<S, E>, S : Any, E : Any> rememberViewStore(store: @Composable () -> ST): ViewStore<ST, S, E> {
+    val store = store()
+    val rememberStore = remember { store } // persist the initial Store instance across recompositions
     val state by rememberStore.state.collectAsState()
     return remember(state) {
         ViewStore(
