@@ -22,19 +22,19 @@ sealed interface TestEvent {
     data class NavigateToScreen(val screenId: String) : TestEvent
 }
 
-// Test store contract implementation
-class TestStoreContract : StoreContract<TestState, TestEvent> {
-    private val _uiState = MutableStateFlow<TestState>(TestState.Loading())
-    override val uiState: StateFlow<TestState> = _uiState
+// Test store implementation
+class TestStore : Store<TestState, TestEvent> {
+    private val _state = MutableStateFlow<TestState>(TestState.Loading())
+    override val state: StateFlow<TestState> = _state
 
-    private val _uiEvent = MutableSharedFlow<TestEvent>()
-    override val uiEvent = _uiEvent
+    private val _event = MutableSharedFlow<TestEvent>()
+    override val event = _event
 
     var actionCalled = false
     var actionValue: Int = 0
 
     fun updateState(state: TestState) {
-        _uiState.value = state
+        _state.value = state
     }
 
     fun performAction(value: Int) {
@@ -43,156 +43,156 @@ class TestStoreContract : StoreContract<TestState, TestEvent> {
     }
 
     suspend fun emitEvent(event: TestEvent) {
-        _uiEvent.emit(event)
+        _event.emit(event)
     }
 }
 
 class StoreTest {
     @Test
-    fun `Store creation with state only`() {
+    fun `ViewStore creation with state only`() {
         val state = TestState.Success(42)
-        val store = Store<TestStoreContract, TestState, TestEvent>(
-            uiState = state,
-            storeContract = null,
+        val viewStore = ViewStore<TestStore, TestState, TestEvent>(
+            state = state,
+            store = null,
         )
 
-        assertEquals(state, store.uiState)
+        assertEquals(state, viewStore.state)
     }
 
     @Test
-    fun `Store creation with state and contract`() {
-        val contract = TestStoreContract()
+    fun `ViewStore creation with state and store`() {
+        val store = TestStore()
         val state = TestState.Success(100)
-        val store = Store(
-            uiState = state,
-            storeContract = contract,
+        val viewStore = ViewStore(
+            state = state,
+            store = store,
         )
 
-        assertEquals(state, store.uiState)
+        assertEquals(state, viewStore.state)
     }
 
     @Test
-    fun `Store equals returns true for same state`() {
+    fun `ViewStore equals returns true for same state`() {
         val state = TestState.Success(42)
-        val store1 = Store<TestStoreContract, TestState, TestEvent>(
-            uiState = state,
-            storeContract = null,
+        val viewStore1 = ViewStore<TestStore, TestState, TestEvent>(
+            state = state,
+            store = null,
         )
-        val store2 = Store<TestStoreContract, TestState, TestEvent>(
-            uiState = state,
-            storeContract = null,
+        val viewStore2 = ViewStore<TestStore, TestState, TestEvent>(
+            state = state,
+            store = null,
         )
 
-        assertEquals(store1, store2)
+        assertEquals(viewStore1, viewStore2)
     }
 
     @Test
-    fun `Store equals returns false for different state`() {
-        val store1 = Store<TestStoreContract, TestState, TestEvent>(
-            uiState = TestState.Success(42),
-            storeContract = null,
+    fun `ViewStore equals returns false for different state`() {
+        val viewStore1 = ViewStore<TestStore, TestState, TestEvent>(
+            state = TestState.Success(42),
+            store = null,
         )
-        val store2 = Store<TestStoreContract, TestState, TestEvent>(
-            uiState = TestState.Success(100),
-            storeContract = null,
+        val viewStore2 = ViewStore<TestStore, TestState, TestEvent>(
+            state = TestState.Success(100),
+            store = null,
         )
 
-        assertNotEquals(store1, store2)
+        assertNotEquals(viewStore1, viewStore2)
     }
 
     @Test
-    fun `Store equals returns true for same instance`() {
-        val store = Store<TestStoreContract, TestState, TestEvent>(
-            uiState = TestState.Success(42),
-            storeContract = null,
+    fun `ViewStore equals returns true for same instance`() {
+        val viewStore = ViewStore<TestStore, TestState, TestEvent>(
+            state = TestState.Success(42),
+            store = null,
         )
 
-        assertEquals(store, store)
+        assertEquals(viewStore, viewStore)
     }
 
     @Test
-    fun `Store equals returns false for different types`() {
-        val store = Store<TestStoreContract, TestState, TestEvent>(
-            uiState = TestState.Success(42),
-            storeContract = null,
+    fun `ViewStore equals returns false for different types`() {
+        val viewStore = ViewStore<TestStore, TestState, TestEvent>(
+            state = TestState.Success(42),
+            store = null,
         )
-        val other = "not a store"
+        val other = "not a view store"
 
-        assertFalse(store.equals(other))
+        assertFalse(viewStore.equals(other))
     }
 
     @Test
-    fun `Store hashCode is consistent with equals`() {
+    fun `ViewStore hashCode is consistent with equals`() {
         val state = TestState.Success(42)
-        val store1 = Store<TestStoreContract, TestState, TestEvent>(
-            uiState = state,
-            storeContract = null,
+        val viewStore1 = ViewStore<TestStore, TestState, TestEvent>(
+            state = state,
+            store = null,
         )
-        val store2 = Store<TestStoreContract, TestState, TestEvent>(
-            uiState = state,
-            storeContract = null,
+        val viewStore2 = ViewStore<TestStore, TestState, TestEvent>(
+            state = state,
+            store = null,
         )
 
-        assertEquals(store1, store2)
-        assertEquals(store1.hashCode(), store2.hashCode())
+        assertEquals(viewStore1, viewStore2)
+        assertEquals(viewStore1.hashCode(), viewStore2.hashCode())
     }
 
     @Test
-    fun `Store hashCode differs for different states`() {
-        val store1 = Store<TestStoreContract, TestState, TestEvent>(
-            uiState = TestState.Success(42),
-            storeContract = null,
+    fun `ViewStore hashCode differs for different states`() {
+        val viewStore1 = ViewStore<TestStore, TestState, TestEvent>(
+            state = TestState.Success(42),
+            store = null,
         )
-        val store2 = Store<TestStoreContract, TestState, TestEvent>(
-            uiState = TestState.Success(100),
-            storeContract = null,
+        val viewStore2 = ViewStore<TestStore, TestState, TestEvent>(
+            state = TestState.Success(100),
+            store = null,
         )
 
-        assertNotEquals(store1.hashCode(), store2.hashCode())
+        assertNotEquals(viewStore1.hashCode(), viewStore2.hashCode())
     }
 
     @Test
-    fun `Store action executes block when contract is present`() {
-        val contract = TestStoreContract()
-        val store = Store(
-            uiState = TestState.Loading(),
-            storeContract = contract,
+    fun `ViewStore action executes block when store is present`() {
+        val store = TestStore()
+        val viewStore = ViewStore(
+            state = TestState.Loading(),
+            store = store,
         )
 
-        store.action {
+        viewStore.action {
             performAction(42)
         }
 
-        assertTrue(contract.actionCalled)
-        assertEquals(42, contract.actionValue)
+        assertTrue(store.actionCalled)
+        assertEquals(42, store.actionValue)
     }
 
     @Test
-    fun `Store action does nothing when contract is null`() {
-        val store = Store<TestStoreContract, TestState, TestEvent>(
-            uiState = TestState.Loading(),
-            storeContract = null,
+    fun `ViewStore action does nothing when store is null`() {
+        val viewStore = ViewStore<TestStore, TestState, TestEvent>(
+            state = TestState.Loading(),
+            store = null,
         )
 
         // This should not throw an exception
-        store.action {
+        viewStore.action {
             performAction(42)
         }
     }
 
     @Test
-    fun `Store render executes block when state matches type`() {
-        val store = Store<TestStoreContract, TestState, TestEvent>(
-            uiState = TestState.Success(42),
-            storeContract = null,
+    fun `ViewStore render executes block when state matches type`() {
+        val viewStore = ViewStore<TestStore, TestState, TestEvent>(
+            state = TestState.Success(42),
+            store = null,
         )
 
         var renderCalled = false
         var capturedValue = 0
 
-        store.render<TestState.Success> {
+        viewStore.render<TestState.Success> {
             renderCalled = true
-            capturedValue = uiState.value
+            capturedValue = state.value
         }
 
         assertTrue(renderCalled)
@@ -200,15 +200,15 @@ class StoreTest {
     }
 
     @Test
-    fun `Store render does not execute block when state does not match type`() {
-        val store = Store<TestStoreContract, TestState, TestEvent>(
-            uiState = TestState.Loading(),
-            storeContract = null,
+    fun `ViewStore render does not execute block when state does not match type`() {
+        val viewStore = ViewStore<TestStore, TestState, TestEvent>(
+            state = TestState.Loading(),
+            store = null,
         )
 
         var renderCalled = false
 
-        store.render<TestState.Success> {
+        viewStore.render<TestState.Success> {
             renderCalled = true
         }
 
@@ -216,69 +216,69 @@ class StoreTest {
     }
 
     @Test
-    fun `Store render works with different state types`() {
-        val store = Store<TestStoreContract, TestState, TestEvent>(
-            uiState = TestState.Error("Something went wrong"),
-            storeContract = null,
+    fun `ViewStore render works with different state types`() {
+        val viewStore = ViewStore<TestStore, TestState, TestEvent>(
+            state = TestState.Error("Something went wrong"),
+            store = null,
         )
 
         var errorMessage = ""
 
-        store.render<TestState.Error> {
-            errorMessage = uiState.error
+        viewStore.render<TestState.Error> {
+            errorMessage = state.error
         }
 
         assertEquals("Something went wrong", errorMessage)
     }
 
     @Test
-    fun `Store render with Loading state`() {
-        val store = Store<TestStoreContract, TestState, TestEvent>(
-            uiState = TestState.Loading("Please wait..."),
-            storeContract = null,
+    fun `ViewStore render with Loading state`() {
+        val viewStore = ViewStore<TestStore, TestState, TestEvent>(
+            state = TestState.Loading("Please wait..."),
+            store = null,
         )
 
         var loadingMessage = ""
 
-        store.render<TestState.Loading> {
-            loadingMessage = uiState.message
+        viewStore.render<TestState.Loading> {
+            loadingMessage = state.message
         }
 
         assertEquals("Please wait...", loadingMessage)
     }
 
     @Test
-    fun `Store action can access and modify contract state`() {
-        val contract = TestStoreContract()
-        contract.updateState(TestState.Loading())
+    fun `ViewStore action can access and modify store state`() {
+        val store = TestStore()
+        store.updateState(TestState.Loading())
 
-        val store = Store(
-            uiState = TestState.Loading(),
-            storeContract = contract,
+        val viewStore = ViewStore(
+            state = TestState.Loading(),
+            store = store,
         )
 
-        store.action {
+        viewStore.action {
             updateState(TestState.Success(999))
         }
 
-        assertEquals(TestState.Success(999), contract.uiState.value)
+        assertEquals(TestState.Success(999), store.state.value)
     }
 
     @Test
-    fun `Store with multiple action calls`() {
-        val contract = TestStoreContract()
-        val store = Store(
-            uiState = TestState.Loading(),
-            storeContract = contract,
+    fun `ViewStore with multiple action calls`() {
+        val store = TestStore()
+        val viewStore = ViewStore(
+            state = TestState.Loading(),
+            store = store,
         )
 
-        store.action { performAction(10) }
-        assertEquals(10, contract.actionValue)
+        viewStore.action { performAction(10) }
+        assertEquals(10, store.actionValue)
 
-        store.action { performAction(20) }
-        assertEquals(20, contract.actionValue)
+        viewStore.action { performAction(20) }
+        assertEquals(20, store.actionValue)
 
-        store.action { performAction(30) }
-        assertEquals(30, contract.actionValue)
+        viewStore.action { performAction(30) }
+        assertEquals(30, store.actionValue)
     }
 }
