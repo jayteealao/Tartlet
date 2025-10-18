@@ -61,7 +61,7 @@ mavenPublishing {
 
     pom {
         name = "Tartlet"
-        description = "A Kotlin Multiplatform library."
+        description = "A helper library for Compose Multiplatform."
         inceptionYear = "2025"
         url = "https://github.com/yumemi-inc/Tartlet/"
         licenses {
