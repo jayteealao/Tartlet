@@ -7,8 +7,8 @@
 Tartlet is a helper library for Compose Multiplatform.
 
 Key benefits:
-- **Eliminate callback hoisting**: Pass the *Store* to child composables, eliminating the need to hoist click events and other callbacks to parent cmposables
-- **Simplified preview development**: Develop UI with Android Studio previews by creating *Store* instances with only *UiState*, without requiring ViewModels
+- **Eliminate callback hoisting**: Pass the *Store* to child Composables, eliminating the need to hoist click events and other callbacks to parent Composables
+- **Simplified preview development**: Develop UI with Android Studio previews by creating *Store* instances with only state, without requiring ViewModels
 
 ## Installation
 
@@ -18,20 +18,20 @@ implementation("io.yumemi:tartlet:<latest-release>")
 
 ## Basic usage
 
-### UiState
+### Define state
 
-Marker interface for UI state representations. Implement this interface for your state objects:
+Define a data class to represent your UI state:
 
 ```kotlin
-data class CounterState(val count: Int) : UiState
+data class CounterState(val count: Int)
 ```
 
-### UiEvent
+### Define event
 
-Marker interface for one-time UI events. Implement this interface for events that should be consumed by the UI:
+Define a sealed interface for one-time UI events:
 
 ```kotlin
-sealed interface CounterEvent : UiEvent {
+sealed interface CounterEvent {
     data class ShowToast(val message: String) : CounterEvent
 }
 ```
@@ -87,7 +87,7 @@ fun CounterScreen(
 
 ## Cases where there are no events to handle
 
-Specify `Nothing` for *UiEvent*.
+Specify `Nothing` for the event type.
 
 ```kt
 class CounterViewModel : ViewModel(), StoreContract<CounterState, Nothing> {
@@ -99,12 +99,12 @@ class CounterViewModel : ViewModel(), StoreContract<CounterState, Nothing> {
 }
 ```
 
-## Rendering Multiple States
+## Rendering multiple states
 
 When using sealed interfaces for multiple states, use `Store.render()` to render different UI based on the current state type:
 
 ```kotlin
-sealed interface CounterState : UiState {
+sealed interface CounterState {
     data object Loading : CounterState
     data class Stable(val count: Int) : CounterState
     data class Error(val message: String) : CounterState
@@ -120,7 +120,7 @@ fun CounterScreen(
 
     store.render<CounterState.Stable> {
         Column {
-            Text("Count: ${uiState.count}") // UiState is casted to CounterState.Stable
+            Text("Count: ${uiState.count}") // state is casted to CounterState.Stable
             Button(onClick = { action { increment() } }) {
                 Text("Increment")
             }
@@ -128,7 +128,7 @@ fun CounterScreen(
     }
 
     store.render<CounterState.Error> {
-        Text("Error: ${uiState.message}", color = Color.Red) // UiState is casted to CounterState.Error
+        Text("Error: ${uiState.message}", color = Color.Red) // state is casted to CounterState.Error
     }
 }
 ```
@@ -155,23 +155,23 @@ fun CounterScreen(
 
 @Composable
 private fun StableCounterContent(
-    store: Store<CounterViewModel, CounterState.Stable, Nothing> // UiState is casted to CounterState.Stable
+    store: Store<CounterViewModel, CounterState.Stable, Nothing> // state is casted to CounterState.Stable
 ) {
     Column {
         Text("Count: ${store.uiState.count}")
-        Button(onClick = { store.action { increment() } }) { // No need to hoist click　events to parent
+        Button(onClick = { store.action { increment() } }) { // No need to hoist click events to parent
             Text("Increment")
         }
     }
 }
 ```
 
-## Handling Multiple Events
+## Handling multiple events
 
 You can handle the parent event type and use `when` expressions to process each event type:
 
 ```kt
-sealed interface CounterEvent : UiEvent {
+sealed interface CounterEvent {
     data class ShowToast(val message: String) : CounterEvent
     data class NavigateToDetail(val id: Int) : CounterEvent
     data object Refresh : CounterEvent
@@ -201,7 +201,7 @@ fun CounterScreen(
 
 ## Mock for previewing in Android Studio
 
-Create an instance of `Store` directly with the target *UiState*.
+Create an instance of `Store` directly with the target state.
 
 ```kt
 @Preview
@@ -217,7 +217,7 @@ fun CounterScreenLoadingPreview() {
 }
 ```
 
-Therefore, if you prepare only the *UiState*, it is possible to develop the UI.
+Therefore, if you prepare only the state, it is possible to develop the UI.
 
 ## Mock a ViewModel for testing
 

@@ -5,29 +5,15 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.emptyFlow
 
 /**
- * Marker interface for UI state representations.
- *
- * Implementations of this interface represent the state of a UI component.
- */
-interface UiState
-
-/**
- * Marker interface for UI events.
- *
- * Implementations of this interface represent one-time events that should be consumed by the UI.
- */
-interface UiEvent
-
-/**
  * Contract for a Store that manages UI state and events.
  *
  * This interface defines the contract between a Store and its consumers,
  * providing access to the current UI state and a stream of UI events.
  *
- * @param S The type of UI state, which must implement [UiState]
- * @param E The type of UI event, which must implement [UiEvent]
+ * @param S The type of UI state
+ * @param E The type of UI event
  */
-interface StoreContract<S : UiState, E : UiEvent> {
+interface StoreContract<S : Any, E : Any> {
     /**
      * A [StateFlow] that emits the current UI state.
      *
