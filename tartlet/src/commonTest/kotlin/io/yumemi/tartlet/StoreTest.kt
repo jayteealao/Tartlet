@@ -51,7 +51,7 @@ class StoreTest {
     @Test
     fun `ViewStore creation with state only`() {
         val state = TestState.Success(42)
-        val viewStore = ViewStore<TestStore, TestState, TestEvent>(
+        val viewStore = ViewStore<TestState, TestEvent, TestStore>(
             store = null,
             state = { state },
         )
@@ -74,11 +74,11 @@ class StoreTest {
     @Test
     fun `ViewStore equals returns true for same state`() {
         val state = TestState.Success(42)
-        val viewStore1 = ViewStore<TestStore, TestState, TestEvent>(
+        val viewStore1 = ViewStore<TestState, TestEvent, TestStore>(
             store = null,
             state = { state },
         )
-        val viewStore2 = ViewStore<TestStore, TestState, TestEvent>(
+        val viewStore2 = ViewStore<TestState, TestEvent, TestStore>(
             store = null,
             state = { state },
         )
@@ -88,11 +88,11 @@ class StoreTest {
 
     @Test
     fun `ViewStore equals returns false for different state`() {
-        val viewStore1 = ViewStore<TestStore, TestState, TestEvent>(
+        val viewStore1 = ViewStore<TestState, TestEvent, TestStore>(
             store = null,
             state = { TestState.Success(42) },
         )
-        val viewStore2 = ViewStore<TestStore, TestState, TestEvent>(
+        val viewStore2 = ViewStore<TestState, TestEvent, TestStore>(
             store = null,
             state = { TestState.Success(100) },
         )
@@ -102,7 +102,7 @@ class StoreTest {
 
     @Test
     fun `ViewStore equals returns true for same instance`() {
-        val viewStore = ViewStore<TestStore, TestState, TestEvent>(
+        val viewStore = ViewStore<TestState, TestEvent, TestStore>(
             store = null,
             state = { TestState.Success(42) },
         )
@@ -112,7 +112,7 @@ class StoreTest {
 
     @Test
     fun `ViewStore equals returns false for different types`() {
-        val viewStore = ViewStore<TestStore, TestState, TestEvent>(
+        val viewStore = ViewStore<TestState, TestEvent, TestStore>(
             store = null,
             state = { TestState.Success(42) },
         )
@@ -124,11 +124,11 @@ class StoreTest {
     @Test
     fun `ViewStore hashCode is consistent with equals`() {
         val state = TestState.Success(42)
-        val viewStore1 = ViewStore<TestStore, TestState, TestEvent>(
+        val viewStore1 = ViewStore<TestState, TestEvent, TestStore>(
             store = null,
             state = { state },
         )
-        val viewStore2 = ViewStore<TestStore, TestState, TestEvent>(
+        val viewStore2 = ViewStore<TestState, TestEvent, TestStore>(
             store = null,
             state = { state },
         )
@@ -139,11 +139,11 @@ class StoreTest {
 
     @Test
     fun `ViewStore hashCode differs for different states`() {
-        val viewStore1 = ViewStore<TestStore, TestState, TestEvent>(
+        val viewStore1 = ViewStore<TestState, TestEvent, TestStore>(
             store = null,
             state = { TestState.Success(42) },
         )
-        val viewStore2 = ViewStore<TestStore, TestState, TestEvent>(
+        val viewStore2 = ViewStore<TestState, TestEvent, TestStore>(
             store = null,
             state = { TestState.Success(100) },
         )
@@ -169,7 +169,7 @@ class StoreTest {
 
     @Test
     fun `ViewStore action does nothing when store is null`() {
-        val viewStore = ViewStore<TestStore, TestState, TestEvent>(
+        val viewStore = ViewStore<TestState, TestEvent, TestStore>(
             store = null,
             state = { TestState.Loading() },
         )
@@ -182,7 +182,7 @@ class StoreTest {
 
     @Test
     fun `ViewStore render executes block when state matches type`() {
-        val viewStore = ViewStore<TestStore, TestState, TestEvent>(
+        val viewStore = ViewStore<TestState, TestEvent, TestStore>(
             store = null,
             state = { TestState.Success(42) },
         )
@@ -201,7 +201,7 @@ class StoreTest {
 
     @Test
     fun `ViewStore render does not execute block when state does not match type`() {
-        val viewStore = ViewStore<TestStore, TestState, TestEvent>(
+        val viewStore = ViewStore<TestState, TestEvent, TestStore>(
             store = null,
             state = { TestState.Loading() },
         )
@@ -217,7 +217,7 @@ class StoreTest {
 
     @Test
     fun `ViewStore render works with different state types`() {
-        val viewStore = ViewStore<TestStore, TestState, TestEvent>(
+        val viewStore = ViewStore<TestState, TestEvent, TestStore>(
             store = null,
             state = { TestState.Error("Something went wrong") },
         )
@@ -233,7 +233,7 @@ class StoreTest {
 
     @Test
     fun `ViewStore render with Loading state`() {
-        val viewStore = ViewStore<TestStore, TestState, TestEvent>(
+        val viewStore = ViewStore<TestState, TestEvent, TestStore>(
             store = null,
             state = { TestState.Loading("Please wait...") },
         )
