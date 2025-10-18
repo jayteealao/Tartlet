@@ -18,15 +18,17 @@ import kotlinx.coroutines.flow.filter
  * @param ST The type of store, which must implement [Store]
  * @param S The type of UI state
  * @param E The type of UI event
- * @property state The current UI state
  * @property store The store instance, nullable to support state-only stores
+ * @param state A lambda that provides the current UI state
  */
 @Suppress("unused")
 @Stable
 class ViewStore<ST : Store<S, E>, S : Any, E : Any>(
-    val state: S,
     @PublishedApi internal val store: ST? = null,
+    state: () -> S,
 ) {
+    val state: S = state()
+
     /**
      * Checks equality based on the current state.
      *
@@ -111,18 +113,19 @@ class ViewStore<ST : Store<S, E>, S : Any, E : Any>(
  * @param ST The type of store, which must implement [Store]
  * @param S The type of UI state
  * @param E The type of UI event
- * @param store The store to collect state and events from
+ * @param store A lambda that provides the store to collect state and events from
  * @return A remembered [ViewStore] instance that updates with state changes
  */
 @Suppress("unused")
 @Composable
-fun <ST : Store<S, E>, S : Any, E : Any> rememberViewStore(store: ST): ViewStore<ST, S, E> {
-    val rememberStore = remember { store } // allow different Store instances to be passed
+fun <ST : Store<S, E>, S : Any, E : Any> rememberViewStore(store: @Composable () -> ST): ViewStore<ST, S, E> {
+    val store = store()
+    val rememberStore = remember { store } // persist the initial Store instance across recompositions
     val state by rememberStore.state.collectAsState()
     return remember(state) {
         ViewStore(
-            state = state,
-            store = store,
+            store = rememberStore,
+            state = { state },
         )
     }
 }

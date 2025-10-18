@@ -52,8 +52,8 @@ class StoreTest {
     fun `ViewStore creation with state only`() {
         val state = TestState.Success(42)
         val viewStore = ViewStore<TestStore, TestState, TestEvent>(
-            state = state,
             store = null,
+            state = { state },
         )
 
         assertEquals(state, viewStore.state)
@@ -64,8 +64,8 @@ class StoreTest {
         val store = TestStore()
         val state = TestState.Success(100)
         val viewStore = ViewStore(
-            state = state,
             store = store,
+            state = { state },
         )
 
         assertEquals(state, viewStore.state)
@@ -75,12 +75,12 @@ class StoreTest {
     fun `ViewStore equals returns true for same state`() {
         val state = TestState.Success(42)
         val viewStore1 = ViewStore<TestStore, TestState, TestEvent>(
-            state = state,
             store = null,
+            state = { state },
         )
         val viewStore2 = ViewStore<TestStore, TestState, TestEvent>(
-            state = state,
             store = null,
+            state = { state },
         )
 
         assertEquals(viewStore1, viewStore2)
@@ -89,12 +89,12 @@ class StoreTest {
     @Test
     fun `ViewStore equals returns false for different state`() {
         val viewStore1 = ViewStore<TestStore, TestState, TestEvent>(
-            state = TestState.Success(42),
             store = null,
+            state = { TestState.Success(42) },
         )
         val viewStore2 = ViewStore<TestStore, TestState, TestEvent>(
-            state = TestState.Success(100),
             store = null,
+            state = { TestState.Success(100) },
         )
 
         assertNotEquals(viewStore1, viewStore2)
@@ -103,8 +103,8 @@ class StoreTest {
     @Test
     fun `ViewStore equals returns true for same instance`() {
         val viewStore = ViewStore<TestStore, TestState, TestEvent>(
-            state = TestState.Success(42),
             store = null,
+            state = { TestState.Success(42) },
         )
 
         assertEquals(viewStore, viewStore)
@@ -113,8 +113,8 @@ class StoreTest {
     @Test
     fun `ViewStore equals returns false for different types`() {
         val viewStore = ViewStore<TestStore, TestState, TestEvent>(
-            state = TestState.Success(42),
             store = null,
+            state = { TestState.Success(42) },
         )
         val other = "not a view store"
 
@@ -125,12 +125,12 @@ class StoreTest {
     fun `ViewStore hashCode is consistent with equals`() {
         val state = TestState.Success(42)
         val viewStore1 = ViewStore<TestStore, TestState, TestEvent>(
-            state = state,
             store = null,
+            state = { state },
         )
         val viewStore2 = ViewStore<TestStore, TestState, TestEvent>(
-            state = state,
             store = null,
+            state = { state },
         )
 
         assertEquals(viewStore1, viewStore2)
@@ -140,12 +140,12 @@ class StoreTest {
     @Test
     fun `ViewStore hashCode differs for different states`() {
         val viewStore1 = ViewStore<TestStore, TestState, TestEvent>(
-            state = TestState.Success(42),
             store = null,
+            state = { TestState.Success(42) },
         )
         val viewStore2 = ViewStore<TestStore, TestState, TestEvent>(
-            state = TestState.Success(100),
             store = null,
+            state = { TestState.Success(100) },
         )
 
         assertNotEquals(viewStore1.hashCode(), viewStore2.hashCode())
@@ -155,8 +155,8 @@ class StoreTest {
     fun `ViewStore action executes block when store is present`() {
         val store = TestStore()
         val viewStore = ViewStore(
-            state = TestState.Loading(),
             store = store,
+            state = { TestState.Loading() },
         )
 
         viewStore.action {
@@ -170,8 +170,8 @@ class StoreTest {
     @Test
     fun `ViewStore action does nothing when store is null`() {
         val viewStore = ViewStore<TestStore, TestState, TestEvent>(
-            state = TestState.Loading(),
             store = null,
+            state = { TestState.Loading() },
         )
 
         // This should not throw an exception
@@ -183,8 +183,8 @@ class StoreTest {
     @Test
     fun `ViewStore render executes block when state matches type`() {
         val viewStore = ViewStore<TestStore, TestState, TestEvent>(
-            state = TestState.Success(42),
             store = null,
+            state = { TestState.Success(42) },
         )
 
         var renderCalled = false
@@ -202,8 +202,8 @@ class StoreTest {
     @Test
     fun `ViewStore render does not execute block when state does not match type`() {
         val viewStore = ViewStore<TestStore, TestState, TestEvent>(
-            state = TestState.Loading(),
             store = null,
+            state = { TestState.Loading() },
         )
 
         var renderCalled = false
@@ -218,8 +218,8 @@ class StoreTest {
     @Test
     fun `ViewStore render works with different state types`() {
         val viewStore = ViewStore<TestStore, TestState, TestEvent>(
-            state = TestState.Error("Something went wrong"),
             store = null,
+            state = { TestState.Error("Something went wrong") },
         )
 
         var errorMessage = ""
@@ -234,8 +234,8 @@ class StoreTest {
     @Test
     fun `ViewStore render with Loading state`() {
         val viewStore = ViewStore<TestStore, TestState, TestEvent>(
-            state = TestState.Loading("Please wait..."),
             store = null,
+            state = { TestState.Loading("Please wait...") },
         )
 
         var loadingMessage = ""
@@ -253,8 +253,8 @@ class StoreTest {
         store.updateState(TestState.Loading())
 
         val viewStore = ViewStore(
-            state = TestState.Loading(),
             store = store,
+            state = { TestState.Loading() },
         )
 
         viewStore.action {
@@ -268,8 +268,8 @@ class StoreTest {
     fun `ViewStore with multiple action calls`() {
         val store = TestStore()
         val viewStore = ViewStore(
-            state = TestState.Loading(),
             store = store,
+            state = { TestState.Loading() },
         )
 
         viewStore.action { performAction(10) }

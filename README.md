@@ -69,7 +69,7 @@ A container for UI state that provides methods to render state values, execute a
 ```kotlin
 @Composable
 fun CounterScreen(
-    viewStore: ViewStore<CounterViewModel, CounterState, CounterEvent> = rememberViewStore(viewModel()),
+    viewStore: ViewStore<CounterViewModel, CounterState, CounterEvent> = rememberViewStore { viewModel() },
 ) {
     Column {
         Text("Count: ${viewStore.state.count}")
@@ -112,7 +112,7 @@ sealed interface CounterState {
 
 @Composable
 fun CounterScreen(
-    viewStore: ViewStore<CounterViewModel, CounterState, Nothing> = rememberViewStore(viewModel()),
+    viewStore: ViewStore<CounterViewModel, CounterState, Nothing> = rememberViewStore { viewModel() },
 ) {
     viewStore.render<CounterState.Loading> {
         CircularProgressIndicator()
@@ -138,7 +138,7 @@ You can extract a state's UI into a separate composable function by passing the 
 ```kt
 @Composable
 fun CounterScreen(
-    viewStore: ViewStore<CounterViewModel, CounterState, Nothing> = rememberViewStore(viewModel()),
+    viewStore: ViewStore<CounterViewModel, CounterState, Nothing> = rememberViewStore { viewModel() },
 ) {
     viewStore.render<CounterState.Loading> {
         // ...
@@ -179,7 +179,7 @@ sealed interface CounterEvent {
 
 @Composable
 fun CounterScreen(
-    viewStore: ViewStore<CounterViewModel, CounterState, CounterEvent> = rememberViewStore(viewModel()),
+    viewStore: ViewStore<CounterViewModel, CounterState, CounterEvent> = rememberViewStore { viewModel() },
 ) {
     // ...
 
@@ -209,9 +209,9 @@ Create an instance of `ViewStore` directly with the target state.
 fun CounterScreenLoadingPreview() {
     MyApplicationTheme {
         CounterScreen(
-            viewStore = ViewStore(
-                state = CounterState.Loading,
-            ),
+            viewStore = ViewStore {
+                CounterState.Loading
+            },
         )
     }
 }
@@ -239,7 +239,7 @@ class MainViewModel : ViewModel(), CounterStore {
 
 @Composable
 fun CounterScreen(
-    viewStore: ViewStore<CounterStore, CounterState, CounterEvent> = rememberViewStore(viewModel<CounterViewModel>()),
+    viewStore: ViewStore<CounterStore, CounterState, CounterEvent> = rememberViewStore { viewModel<CounterViewModel>() },
 ) {
     // ...
 }
