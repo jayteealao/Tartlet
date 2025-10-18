@@ -15,15 +15,15 @@ import kotlinx.coroutines.flow.filter
  * to execute actions on the store, render UI based on specific state types,
  * and handle specific event types in Compose.
  *
- * @param ST The type of store, which must implement [Store]
  * @param S The type of UI state
  * @param E The type of UI event
+ * @param ST The type of store, which must implement [Store]
  * @property store The store instance, nullable to support state-only stores
  * @param state A lambda that provides the current UI state
  */
 @Suppress("unused")
 @Stable
-class ViewStore<ST : Store<S, E>, S : Any, E : Any>(
+class ViewStore<S : Any, E : Any, ST : Store<S, E>>(
     @PublishedApi internal val store: ST? = null,
     state: () -> S,
 ) {
@@ -75,10 +75,10 @@ class ViewStore<ST : Store<S, E>, S : Any, E : Any>(
      * @param S2 The specific state type to check for
      * @param block The render block to execute if the state matches the type
      */
-    inline fun <reified S2 : S> render(block: ViewStore<*, S2, E>.() -> Unit) {
+    inline fun <reified S2 : S> render(block: ViewStore<S2, E, *>.() -> Unit) {
         if (state is S2) {
             @Suppress("UNCHECKED_CAST")
-            block(this as ViewStore<*, S2, E>)
+            block(this as ViewStore<S2, E, *>)
         }
     }
 
@@ -94,7 +94,7 @@ class ViewStore<ST : Store<S, E>, S : Any, E : Any>(
      * @param block The handler block to execute when an event of type [E2] is emitted
      */
     @Composable
-    inline fun <reified E2 : E> handle(crossinline block: ViewStore<ST, S, E>.(E2) -> Unit) {
+    inline fun <reified E2 : E> handle(crossinline block: ViewStore<S, E, ST>.(E2) -> Unit) {
         LaunchedEffect(store) {
             store?.event?.filter { it is E2 }?.collect {
                 block(this@ViewStore, it as E2)
@@ -118,7 +118,7 @@ class ViewStore<ST : Store<S, E>, S : Any, E : Any>(
  */
 @Suppress("unused")
 @Composable
-fun <ST : Store<S, E>, S : Any, E : Any> rememberViewStore(store: @Composable () -> ST): ViewStore<ST, S, E> {
+fun <S : Any, E : Any, ST : Store<S, E>> rememberViewStore(store: @Composable () -> ST): ViewStore<S, E, ST> {
     val store = store()
     val rememberStore = remember { store } // persist the initial Store instance across recompositions
     val state by rememberStore.state.collectAsState()
