@@ -10,14 +10,14 @@ import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 // Test state implementations
-sealed interface TestState : UiState {
+sealed interface TestState {
     data class Loading(val message: String = "Loading...") : TestState
     data class Success(val value: Int) : TestState
     data class Error(val error: String) : TestState
 }
 
 // Test event implementations
-sealed interface TestEvent : UiEvent {
+sealed interface TestEvent {
     data class ShowToast(val message: String) : TestEvent
     data class NavigateToScreen(val screenId: String) : TestEvent
 }

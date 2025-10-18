@@ -16,14 +16,14 @@ import kotlinx.coroutines.flow.filter
  * and handle specific event types in Compose.
  *
  * @param SC The type of store contract, which must implement [StoreContract]
- * @param S The type of UI state, which must implement [UiState]
- * @param E The type of UI event, which must implement [UiEvent]
+ * @param S The type of UI state
+ * @param E The type of UI event
  * @property uiState The current UI state
  * @property storeContract The store contract instance, nullable to support state-only stores
  */
 @Suppress("unused")
 @Stable
-class Store<SC : StoreContract<S, E>, S : UiState, E : UiEvent>(
+class Store<SC : StoreContract<S, E>, S : Any, E : Any>(
     val uiState: S,
     @PublishedApi internal val storeContract: SC? = null,
 ) {
@@ -109,14 +109,14 @@ class Store<SC : StoreContract<S, E>, S : UiState, E : UiEvent>(
  * The store contract itself is remembered to ensure stability across recompositions.
  *
  * @param SC The type of store contract, which must implement [StoreContract]
- * @param S The type of UI state, which must implement [UiState]
- * @param E The type of UI event, which must implement [UiEvent]
+ * @param S The type of UI state
+ * @param E The type of UI event
  * @param storeContract The store contract to collect state and events from
  * @return A remembered [Store] instance that updates with state changes
  */
 @Suppress("unused")
 @Composable
-fun <SC : StoreContract<S, E>, S : UiState, E : UiEvent> rememberStore(storeContract: SC): Store<SC, S, E> {
+fun <SC : StoreContract<S, E>, S : Any, E : Any> rememberStore(storeContract: SC): Store<SC, S, E> {
     val rememberStoreContract =
         remember { storeContract } // allow different Store Contract instances to be passed
     val state by rememberStoreContract.uiState.collectAsState()
