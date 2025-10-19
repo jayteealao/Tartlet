@@ -7,8 +7,23 @@
 Tartlet is a helper library for Compose Multiplatform.
 
 Key benefits:
-- **Eliminate callback hoisting**: Pass the *ViewStore* to child Composables, eliminating the need to hoist click events and other callbacks to parent Composables
-- **Simplified preview development**: Develop UI with Android Studio previews by creating *ViewStore* instances with only state, without requiring ViewModels
+- **Eliminate callback hoisting**: Pass state and actions to child Composables, eliminating the need to hoist click events and other callbacks to parent Composables
+- **Simplified preview development**: Develop UI with Android Studio previews by creating instances with only state, without requiring ViewModels
+
+## Table of Contents
+
+- [Installation](#installation)
+- [Basic usage](#basic-usage)
+  - [Define state](#define-state)
+  - [Define event](#define-event)
+  - [Store](#store)
+  - [ViewStore](#viewstore)
+- [Passing ViewStore to child Composables](#passing-viewstore-to-child-composables)
+- [Cases where there are no events to handle](#cases-where-there-are-no-events-to-handle)
+- [Rendering multiple states](#rendering-multiple-states)
+- [Handling multiple events](#handling-multiple-events)
+- [Mock for previewing in Android Studio](#mock-for-previewing-in-android-studio)
+- [Mock a ViewModel for testing](#mock-a-viewmodel-for-testing)
 
 ## Installation
 
@@ -41,22 +56,22 @@ sealed interface CounterEvent {
 Typically implemented by a ViewModel:
 
 ```kotlin
-class CounterViewModel : ViewModel(), Store<CounterState, CounterEvent> {
+class CounterViewModel : ViewModel(), Store<CounterState, CounterEvent> { // Inherits Store
     private val _state = MutableStateFlow<CounterState>(CounterState(count = 0))
-    override val state = _state.asStateFlow()
+    override val state = _state.asStateFlow() // Override state property
 
     private val _event = MutableSharedFlow<CounterEvent>()
-    override val event = _event.asSharedFlow()
+    override val event = _event.asSharedFlow() // Override event property
 
     fun increment() {
         _state.update { it.copy(count = it.count + 1) }
     }
 
     fun decrement() {
-        if (0 <= _state.value.count) {
+        if (0 < _state.value.count) {
             _state.update { it.copy(count = it.count - 1) }
         } else {
-            viewModelScope.launch { _event.emit(CounterEvent.ShowToast("Can not Decrement.")) }
+            viewModelScope.launch { _event.emit(CounterEvent.ShowToast("Cannot decrement below zero.")) }
         }
     }
 }
@@ -64,23 +79,61 @@ class CounterViewModel : ViewModel(), Store<CounterState, CounterEvent> {
 
 ### ViewStore
 
-A container for UI state that provides methods to render state values, execute actions, and handle events:
+An immutable snapshot of UI state that provides methods to render state values, execute actions, and handle events:
 
 ```kotlin
 @Composable
 fun CounterScreen(
-    viewStore: ViewStore<CounterViewModel, CounterState, CounterEvent> = rememberViewStore { viewModel() },
+    viewStore: ViewStore<CounterState, CounterEvent, CounterViewModel> = rememberViewStore { viewModel() },
 ) {
     Column {
         Text("Count: ${viewStore.state.count}")
 
-        Button(onClick = { viewStore.action { increment() } }) { // Call ViewModel method
+        // Call ViewModel method
+        Button(onClick = { viewStore.action { increment() } }) { 
             Text("Increment")
+        }
+        Button(onClick = { viewStore.action { decrement() } }) {
+            Text("Decrement")
         }
     }
 
     viewStore.handle<CounterEvent.ShowToast> { event ->
-        // Show toast
+        // Show toast..
+    }
+}
+```
+
+## Passing ViewStore to child Composables
+
+Passing ViewStore instances to child Composables eliminates the need to hoist actions:
+
+```kotlin
+@Composable
+fun CounterScreen(
+    viewStore: ViewStore<CounterState, CounterEvent, CounterViewModel> = rememberViewStore { viewModel() },
+) {
+    CounterContent(viewStore = viewStore) // Pass ViewStore to child
+
+    viewStore.handle<CounterEvent.ShowToast> { event ->
+        // Show toast..
+    }
+}
+
+@Composable
+private fun CounterContent(
+    viewStore: ViewStore<CounterState, CounterEvent, CounterViewModel>
+) {
+    Column {
+        Text("Count: ${viewStore.state.count}")
+
+        // No need to hoist actions
+        Button(onClick = { viewStore.action { increment() } }) { 
+            Text("Increment")
+        }
+        Button(onClick = { viewStore.action { decrement() } }) {
+            Text("Decrement")
+        }
     }
 }
 ```
@@ -93,6 +146,8 @@ Specify `Nothing` for the event type.
 class CounterViewModel : ViewModel(), Store<CounterState, Nothing> {
     private val _state = MutableStateFlow<CounterState>(CounterState(count = 0))
     override val state = _state.asStateFlow()
+
+    // No need to override event property when using Nothing type
 
     fun increment() { ... }
     fun decrement() { ... }
@@ -112,7 +167,7 @@ sealed interface CounterState {
 
 @Composable
 fun CounterScreen(
-    viewStore: ViewStore<CounterViewModel, CounterState, Nothing> = rememberViewStore { viewModel() },
+    viewStore: ViewStore<CounterState, Nothing, CounterViewModel> = rememberViewStore { viewModel() },
 ) {
     viewStore.render<CounterState.Loading> {
         CircularProgressIndicator()
@@ -120,32 +175,36 @@ fun CounterScreen(
 
     viewStore.render<CounterState.Stable> {
         Column {
-            Text("Count: ${state.count}") // state is casted to CounterState.Stable
+            Text("Count: ${state.count}") // state is cast to CounterState.Stable
+
             Button(onClick = { action { increment() } }) {
                 Text("Increment")
+            }
+            Button(onClick = { action { decrement() } }) {
+                Text("Decrement")
             }
         }
     }
 
     viewStore.render<CounterState.Error> {
-        Text("Error: ${state.message}", color = Color.Red) // state is casted to CounterState.Error
+        Text("Error: ${state.message}", color = Color.Red) // state is cast to CounterState.Error
     }
 }
 ```
 
-You can extract a state's UI into a separate composable function by passing the ViewStore. This eliminates the need to hoist click events and other callbacks to the parent:
+The ViewStore's state type is automatically narrowed within the render block, allowing the casted ViewStore to be passed to child Composables:
 
 ```kt
 @Composable
 fun CounterScreen(
-    viewStore: ViewStore<CounterViewModel, CounterState, Nothing> = rememberViewStore { viewModel() },
+    viewStore: ViewStore<CounterState, Nothing, CounterViewModel> = rememberViewStore { viewModel() },
 ) {
     viewStore.render<CounterState.Loading> {
         // ...
     }
 
     viewStore.render<CounterState.Stable> {
-        StableCounterContent(viewStore = this) // Pass the ViewStore to child composable
+        CounterContent(viewStore = this) // Pass casted ViewStore to child
     }
 
     viewStore.render<CounterState.Error> {
@@ -154,21 +213,20 @@ fun CounterScreen(
 }
 
 @Composable
-private fun StableCounterContent(
-    viewStore: ViewStore<CounterViewModel, CounterState.Stable, Nothing> // state is casted to CounterState.Stable
+private fun CounterContent(
+    viewStore: ViewStore<CounterState.Stable, Nothing, CounterViewModel> // state is cast to CounterState.Stable
 ) {
     Column {
         Text("Count: ${viewStore.state.count}")
-        Button(onClick = { viewStore.action { increment() } }) { // No need to hoist click events to parent
-            Text("Increment")
-        }
+
+        // ...
     }
 }
 ```
 
 ## Handling multiple events
 
-You can handle the parent event type and use `when` expressions to process each event type:
+Handle the parent event type and use `when` expressions to process each event type:
 
 ```kt
 sealed interface CounterEvent {
@@ -179,7 +237,7 @@ sealed interface CounterEvent {
 
 @Composable
 fun CounterScreen(
-    viewStore: ViewStore<CounterViewModel, CounterState, CounterEvent> = rememberViewStore { viewModel() },
+    viewStore: ViewStore<CounterState, CounterEvent, CounterViewModel> = rememberViewStore { viewModel() },
 ) {
     // ...
 
@@ -217,7 +275,7 @@ fun CounterScreenLoadingPreview() {
 }
 ```
 
-Therefore, if you prepare only the state, it is possible to develop the UI.
+This allows UI development with only state, without requiring a ViewModel.
 
 ## Mock a ViewModel for testing
 
@@ -229,17 +287,18 @@ interface CounterStore : Store<CounterState, Nothing> {
     fun decrement()
 }
 
-class MainViewModel : ViewModel(), CounterStore {
+class CounterViewModel : ViewModel(), CounterStore { // Inherits CounterStore
     private val _state = MutableStateFlow<CounterState>(CounterState(count = 0))
-    override val state = _state.asStateFlow()
+    override val state = _state.asStateFlow() // Override state property
 
-    override fun increment() { ... }
-    override fun decrement() { ... }
+    override fun increment() { ... } // Override increment() method
+    override fun decrement() { ... } // Override decrement() method
 }
 
 @Composable
 fun CounterScreen(
-    viewStore: ViewStore<CounterStore, CounterState, CounterEvent> = rememberViewStore { viewModel<CounterViewModel>() },
+    // Specify CounterStore instead of CounterViewModel for testing
+    viewStore: ViewStore<CounterState, Nothing, CounterStore> = rememberViewStore { viewModel<CounterViewModel>() },
 ) {
     // ...
 }

@@ -7,13 +7,18 @@ import kotlinx.coroutines.flow.emptyFlow
 /**
  * Interface for a Store implementation that manages UI state and events.
  *
- * This interface defines the contract between a Store implementation and its consumers,
- * providing access to the current UI state and a stream of UI events.
+ * This interface defines the contract for state management, typically implemented
+ * by ViewModels. It provides access to the current UI state through a [StateFlow]
+ * and optionally emits one-time UI events through a [Flow].
  *
- * @param S The type of UI state
- * @param E The type of UI event
+ * Implementations should expose the [state] property to represent the current UI state,
+ * and optionally override the [event] property to emit one-time events like navigation
+ * or showing toasts.
+ *
+ * @param S The type of UI state (covariant)
+ * @param E The type of UI event (covariant, use [Nothing] if no events are needed)
  */
-interface Store<S : Any, E : Any> {
+interface Store<out S : Any, out E : Any> {
     /**
      * A [StateFlow] that emits the current UI state.
      *
