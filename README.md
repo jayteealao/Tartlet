@@ -1,4 +1,4 @@
-# Tartlet
+![logo](doc/logo.png)
 
 [![Maven Central](https://img.shields.io/maven-central/v/io.yumemi/tartlet)](https://central.sonatype.com/artifact/io.yumemi/tartlet)
 ![License](https://img.shields.io/github/license/yumemi-inc/Tartlet)
