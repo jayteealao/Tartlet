@@ -13,6 +13,7 @@ Key benefits:
 ## Table of Contents
 
 - [Installation](#installation)
+- [Examples](#examples)
 - [Basic usage](#basic-usage)
   - [Define state](#define-state)
   - [Define event](#define-event)
@@ -24,6 +25,10 @@ Key benefits:
 - [Handling multiple events](#handling-multiple-events)
 - [Mock for previewing in Android Studio](#mock-for-previewing-in-android-studio)
 - [Mock a ViewModel for testing](#mock-a-viewmodel-for-testing)
+
+## Examples
+
+See [doc/examples.md](doc/examples.md) for examples of how to use `tartlet` with `AnimatedVisibility` and `AnimatedContent`.
 
 ## Installation
 
